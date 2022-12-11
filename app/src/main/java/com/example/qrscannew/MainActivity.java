@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriMaps));
                         mapsIntent.setPackage("com.google.android.apps.maps");
                         startActivity(mapsIntent);
+
                     }
                 }
 
