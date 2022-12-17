@@ -3,6 +3,7 @@ package com.example.qrscannew;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 //View objects
         buttonScan = (Button) findViewById(R.id.buttonScan);
         textViewNama = (TextView) findViewById(R.id.textViewNama);
@@ -52,46 +54,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode,
                 resultCode, data);
         if (result != null) {
+
 //jika qrcode tidak ada sama sekali
             if (result.getContents() == null) {
                 Toast.makeText(this, "Hasil SCAN tidak ada", Toast.LENGTH_LONG).show();
+
             } else {
 //jika qr ada/ditemukan data nya
-                try {
-//konversi datanya ke json
+                //1.browser
+                String url = new String(result.getContents());
+                String address;
+                String http = "http://";
+                String https = "https://";
+                address = new String(result.getContents());
+                if (address.contains(http) || address.contains(https)) {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(browserIntent);
+                }
+                // 2.kirim email pada barcode yang sudah ter-scan
 
-
-                    JSONObject obj = new JSONObject(result.getContents());
-
-
-//di set nilai datanya ke textviews
-                    textViewNama.setText(obj.getString("nama"));
-                    textViewKelas.setText(obj.getString("kelas"));
-                    textViewNim.setText(obj.getString("nim"));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-//jika kontolling ada di sini
-//itu berarti format encoded tidak cocok
-//dalam hal ini kita dapat menampilkan data apapun yg tesedia pada qrcode
-//untuk di toast
-
-                    Toast.makeText(this, result.getContents(),
-                            Toast.LENGTH_LONG).show();
-
-                    //1.browser
-                    String url = new String(result.getContents());
-                    String address;
-                    String http = "http://";
-                    String https = "https://";
-                    address = new String(result.getContents());
-                    if (address.contains(http) || address.contains(https)) {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(browserIntent);
-                    }
-                    // 3.kirim email pada barcode yang sudah ter-scan
-
-                    String alamat = new String(result.getContents());
-                    String at = "@";
+                String alamat = new String(result.getContents());
+                String at = "@gmail";
 
                     if (alamat.contains(at)) {
                         Intent intent = new Intent(Intent.ACTION_SEND);
@@ -105,34 +88,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         startActivity(Intent.createChooser(intent, "Send mail"));
                     }
 
-                    //Dial number
-                    String number;
-                    number = new String(result.getContents());
+                //3.Dial number
+                String number;
+                number = new String(result.getContents());
 
-                    if (number.matches("^[0-9]*$") && number.length() > 11) {
-                        Intent callIntent = new Intent(Intent.ACTION_DIAL);
-                        Intent dialIntent = new Intent(Intent.ACTION_CALL);
-                        dialIntent.setData(Uri.parse("tel:" + number));
-                        callIntent.setData(Uri.parse("tel:" + number));
-                        startActivity(callIntent);
-                        startActivity(dialIntent);
-                    }
-
-                    //buka koordinat maps
-
-
-                    String uriMaps = new String(result.getContents());
-                    String maps = "http://maps.google.com/maps?q=loc:" + uriMaps;
-                    String testDoubleData = ",.";
-
-                    if (uriMaps.contains(testDoubleData)) {
-                        Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriMaps));
-                        mapsIntent.setPackage("com.google.android.apps.maps");
-                        startActivity(mapsIntent);
-
-                    }
+                if (number.matches("^[0-9,+]*$") && number.length() > 11) {
+                    Intent callIntent = new Intent(Intent.ACTION_DIAL);
+                    Intent dialIntent = new Intent(Intent.ACTION_CALL);
+                    dialIntent.setData(Uri.parse("tel:" + number));
+                    callIntent.setData(Uri.parse("tel:" + number));
+                    startActivity(callIntent);
+                    startActivity(dialIntent);
                 }
 
+                //4.buka koordinat maps
+
+                String uriMaps = new String(result.getContents());
+                String maps = "http://maps.google.com/maps?q=loc:" + uriMaps;
+                String testDoubleData1 = ",";
+                String testDoubleData2 = ".";
+
+                boolean b = uriMaps.contains(testDoubleData1) && uriMaps.contains(testDoubleData2);
+                if (b) {
+                    Intent mapsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(maps));
+                    mapsIntent.setPackage("com.google.android.apps.maps");
+                    startActivity(mapsIntent);
+                }
+
+
+
+                try {
+//konversi datanya ke jsom
+                    JSONObject obj = new JSONObject(result.getContents());
+
+//di set nilai datanya ke textviews
+                    textViewNama.setText(obj.getString("nama"));
+                    textViewKelas.setText(obj.getString("kelas"));
+                    textViewNim.setText(obj.getString("nim"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+//jika kontrolling ada di sini
+//itu berarti format encoded tidak cocok
+//dalam hal ini kita dapat menampilkan data apapun yg tesedia pada qrcode
+//untuk di toas
+
+
+                    Toast.makeText(this, result.getContents(),
+                            Toast.LENGTH_LONG).show();
+
+
+                }
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
